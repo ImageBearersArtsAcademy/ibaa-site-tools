@@ -109,17 +109,10 @@ function getFormValues() {
 
 function validateForms() {
 	let isValid = true;
-	for (const key of Object.keys(allForms)) {
-		for (const form of allForms[key]) {
-			const inputs = form.querySelectorAll('input[required]');
-			for (const input of inputs) {
-				if (input instanceof HTMLInputElement && input.checkValidity()) {
-					input.setCustomValidity('This field is required');
-					isValid = false;
-				} else {
-					input.setCustomValidity('');
-				}
-			}
+	const formElements = document.querySelectorAll('form');
+	for (const form of formElements) {
+		if (!form.reportValidity()) {
+			isValid = false;
 		}
 	}
 	return isValid;
