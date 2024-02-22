@@ -6,7 +6,7 @@ const submitButton = cloneSubmitButton();
 const notesInput = document.querySelector('#wf-ecom-notes');
 
 /**
- * @type {Record<string, Element[]>}
+ * @type {Record<string, HTMLFormElement[]>}
  */
 const allForms = {};
 
@@ -109,10 +109,11 @@ function getFormValues() {
 
 function validateForms() {
 	let isValid = true;
-	const formElements = document.querySelectorAll('form');
-	for (const form of formElements) {
-		if (!form.reportValidity()) {
-			isValid = false;
+	for (const forms of Object.values(allForms)) {
+		for (const form of forms) {
+			if (!form.reportValidity()) {
+				isValid = false;
+			}
 		}
 	}
 	return isValid;
