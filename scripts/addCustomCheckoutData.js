@@ -113,7 +113,7 @@ function validateForms() {
 		for (const form of allForms[key]) {
 			const inputs = form.querySelectorAll('input[required]');
 			for (const input of inputs) {
-				if (input instanceof HTMLInputElement && input.value.length === 0) {
+				if (input instanceof HTMLInputElement && input.checkValidity()) {
 					input.setCustomValidity('This field is required');
 					isValid = false;
 				} else {
