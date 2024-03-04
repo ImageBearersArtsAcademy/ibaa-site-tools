@@ -1,3 +1,7 @@
 import { listOrders } from "./webflowClient";
 
-listOrders();
+async function main() {
+	console.log(await listOrders());
+}
+
+main();
