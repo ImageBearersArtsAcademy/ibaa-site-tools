@@ -1,0 +1,15 @@
+on:
+  repository_dispatch:
+    types: [submit_order]
+
+jobs:
+  submit_order:
+    runs-on: ubuntu-latest
+    name: Submit Order
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: yarn
+      - run: yarn process-order $ORDER_ID
+        env:
+          ORDER_ID: ${{ github.event.client_payload.orderId }}
