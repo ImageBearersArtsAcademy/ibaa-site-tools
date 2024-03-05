@@ -1,32 +1,69 @@
-import { google } from "googleapis";
-import { configureGoogleAuth } from "./configureGoogleAuth";
+import { google } from 'googleapis';
+import { configureGoogleAuth } from './configureGoogleAuth';
+import { Orders } from '../types';
+import { columnToIndex } from './columnToIndex';
 
-export async function addOrderData(studentData: any) {
-	if (typeof studentData !== "object") {
-		throw new Error("student data must be of type object");
-	}
+export async function addOrderData(orders: Orders) {
+	const allColumns = Object.fromEntries(
+		[
+			...new Set(
+				orders.flatMap((data) =>
+					Object.values(data.studentsInfo).flatMap((classInfo) =>
+						classInfo.flatMap((form) =>
+							Object.values(form).map((x) => x.column)
+						)
+					)
+				)
+			),
+		]
+			.filter((x): x is string => Boolean(x))
+			.map((column) => [column, columnToIndex(column)] as const)
+	);
 
-	await google.sheets("v4").spreadsheets.values.append({
-		auth: configureGoogleAuth(),
-		range: 'A1',
-		requestBody: {
-			values: Object.entries(studentData).flatMap(([classSlug, students]) => {
-				if (!Array.isArray(students)) {
-					return [];
-				}
+	const values = orders.flatMap((order) =>
+		Object.entries(order.studentsInfo).flatMap(([classSlug, classForms]) =>
+			classForms.map((classForm) => {
+				const row: string[] = [order.orderId, slugToReadableName(classSlug), order.parentName, order.parentEmail];
 
-				return students.map(student => {
-					if (typeof student !== 'object') {
-						return ['Could not parse', JSON.stringify(student)];
+				for (const formValue of Object.values(classForm)) {
+					if (!formValue.column) {
+						continue;
 					}
 
-					return [slugToReadableName(classSlug), ...Object.keys(student).sort().map(x => student[x])];
-				});
-			}),
+					const index = allColumns[formValue.column];
+
+					if (index === undefined || index < 4) {
+						continue;
+					}
+
+					row[index] = formValue.value;
+				}
+
+				return row;
+			})
+		)
+	);
+
+	await google.sheets('v4').spreadsheets.values.append({
+		auth: configureGoogleAuth(),
+		range: 'Data!A1',
+		requestBody: {
+			values,
 		},
 		valueInputOption: 'RAW',
 		spreadsheetId: process.env.SPREADSHEET_ID,
 	});
+
+	const today = new Date();
+	await google.sheets('v4').spreadsheets.values.append({
+		auth: configureGoogleAuth(),
+		range: "'Processor Audit'!A1",
+		requestBody: {
+			values: orders.map(order => [order.orderId, today.toISOString()])
+		},
+		valueInputOption: 'RAW',
+		spreadsheetId: process.env.SPREADSHEET_ID,
+	})
 }
 
 function slugToReadableName(slug: string): string {

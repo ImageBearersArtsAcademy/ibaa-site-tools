@@ -97,7 +97,10 @@ function getFormValues() {
 			const inputs = form.querySelectorAll('input');
 			const result = {};
 			for (const input of inputs) {
-				result[input.getAttribute('data-name')] = input.value;
+				result[input.getAttribute('data-name')] = {
+					value: input.value,
+					column: input.getAttribute('data-column'),
+				};
 			}
 			results.push(result);
 		}
