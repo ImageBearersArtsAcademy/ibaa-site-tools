@@ -2,6 +2,8 @@ on:
   repository_dispatch:
     types: [submit_order]
 
+name: Submit order
+
 jobs:
   submit_order:
     runs-on: ubuntu-latest
