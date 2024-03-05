@@ -10,13 +10,14 @@ const StudentInfo = st.dictionary(
 	st.array(st.dictionary(st.string(), StudentInfoField))
 );
 
-const Order = st.record({
+export const Order = st.record({
 	raw: st.any(),
 	orderId: st.string(),
 	parentName: st.string(),
 	parentEmail: st.string(),
 	studentsInfo: StudentInfo,
 });
+export type Order = ReturnType<typeof Order>;
 
 export const Orders = st.array(Order);
 export type Orders = ReturnType<typeof Orders>;
