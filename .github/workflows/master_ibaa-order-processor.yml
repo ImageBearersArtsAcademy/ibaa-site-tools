@@ -16,6 +16,9 @@ env:
 jobs:
   build:
     runs-on: windows-latest
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     steps:
       - name: 'Checkout GitHub Action'
         uses: actions/checkout@v4
@@ -33,34 +36,13 @@ jobs:
           yarn build
           popd
 
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v3
-        with:
-          name: node-app
-          path: .
-
-  deploy:
-    runs-on: windows-latest
-    needs: build
-    environment:
-      name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    permissions:
-      id-token: write #This is required for requesting the JWT
-
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v3
-        with:
-          name: node-app
-      
       - name: Login to Azure
         uses: azure/login@v1
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_79B4A46A37654A459EBEFA52864AB80C }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_B4798DCEFD674FA69E78771DBEDDE176 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_7A0B8BABD7434E67A52FB799A1C84A77 }}
-
+  
       - name: 'Run Azure Functions Action'
         uses: Azure/functions-action@v1
         id: fa
