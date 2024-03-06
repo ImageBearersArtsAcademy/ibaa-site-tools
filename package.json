@@ -2,7 +2,7 @@
   "name": "ibaa-site-tools",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/functions/*.js",
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
