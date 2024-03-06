@@ -25,7 +25,7 @@ export async function getOrder(orderId: string): Promise<Order> {
 	return mapOrder(result.data);
 }
 
-function mapOrder(order: any): Order {
+export function mapOrder(order: any): Order {
 	return Order({
 		raw: order,
 		orderId: order.orderId,

@@ -1,16 +1,19 @@
+//# sourceURL=addCustomCheckoutData.js
 const formTemplate = document.querySelector('.js-per-student-info-form');
 formTemplate.remove();
 formTemplate.setAttribute('id', null);
 formTemplate.classList.add('js-student-info-form');
-const submitButton = cloneSubmitButton();
-const notesInput = document.querySelector('#wf-ecom-notes');
+let submitButton = cloneSubmitButton();
+let notesInput = document.querySelector('#wf-ecom-notes');
 
 /**
  * @type {Record<string, HTMLFormElement[]>}
  */
 const allForms = {};
 
-function createAllStudentDetailsForms() {
+function initializeForms() {
+	notesInput = document.querySelector('#wf-ecom-notes');
+	submitButton = cloneSubmitButton();
 	document.querySelectorAll('.js-remove-me').forEach(x => x.remove());
 
 	const containers = document.querySelectorAll('.js-student-details-container');
@@ -78,12 +81,12 @@ function keepFormsInDocument() {
 	const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
 
 	if (MutationObserver) {
-		const observer = new MutationObserver(createAllStudentDetailsForms);
+		const observer = new MutationObserver(initializeForms);
 
 		observer.observe(orderItemContainer, { childList: true, subtree: true });
 	} else {
-		orderItemContainer.addEventListener('DOMNodeInserted', createAllStudentDetailsForms, false);
-		orderItemContainer.addEventListener('DOMNodeRemoved', createAllStudentDetailsForms, false);
+		orderItemContainer.addEventListener('DOMNodeInserted', initializeForms, false);
+		orderItemContainer.addEventListener('DOMNodeRemoved', initializeForms, false);
 	}
 }
 
@@ -125,7 +128,8 @@ function validateForms() {
 function cloneSubmitButton() {
 	const existingClone = document.querySelector('#checkout-submit-clone');
 	if (existingClone) {
-		return existingClone;
+		existingClone.removeEventListener('click', submitCheckout);
+		existingClone.remove();
 	}
 
 	const originalSubmitButton = document.querySelector('#checkout-submit');
@@ -135,18 +139,20 @@ function cloneSubmitButton() {
 
 	originalSubmitButton.after(submitButtonClone);
 	originalSubmitButton.classList.add('hidden');
-	submitButtonClone.addEventListener('click', function() {
-		if (!validateForms()) {
-			return;
-		}
-
-		const values = getFormValues();
-		notesInput.value = JSON.stringify(values);
-		originalSubmitButton.click();
-	});
+	submitButtonClone.addEventListener('click', submitCheckout);
 
 	return submitButtonClone;
 }
 
-createAllStudentDetailsForms();
+function submitCheckout() {
+	if (!validateForms()) {
+		return;
+	}
+
+	const values = getFormValues();
+	notesInput.value = JSON.stringify(values);
+	originalSubmitButton.click();
+}
+
+initializeForms();
 keepFormsInDocument();

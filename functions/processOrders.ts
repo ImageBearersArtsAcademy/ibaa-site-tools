@@ -4,16 +4,27 @@ import {
 	HttpResponseInit,
 	InvocationContext,
 } from '@azure/functions';
+import { mapOrder } from '../backend';
+import { WebhookPayload } from '../types';
+import { addOrderData } from '../google';
 
 export async function processOrders(
 	request: HttpRequest,
 	context: InvocationContext
 ): Promise<HttpResponseInit> {
-	context.log(`Http function processed request for url "${request.url}"`);
+	// TODO: Remove this once request validation is added
+	return { status: 404 };
 
-	const name = request.query.get('name') || (await request.text()) || 'world';
+	const body = WebhookPayload(await request.json());
+	if (body.triggerType !== 'ecomm_new_order') {
+		return { status: 404 };
+	}
 
-	return { body: `Hello, ${name}!` };
+	const order = mapOrder(body.payload);
+	await addOrderData([order]);
+	context.log(`Processed order ${order.orderId}`);
+
+	return { status: 200 };
 }
 
 app.http('processOrders', {
