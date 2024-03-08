@@ -15,6 +15,7 @@ function initializeForms() {
 	notesInput = document.querySelector('#wf-ecom-notes');
 	submitButton = cloneSubmitButton();
 	document.querySelectorAll('.js-remove-me').forEach(x => x.remove());
+	document.querySelectorAll('.js-hide-me').forEach(x => x.classList.add('hidden'));
 
 	const containers = document.querySelectorAll('.js-student-details-container');
 
@@ -31,33 +32,51 @@ function initializeForms() {
 function createStudentDetailsForm(container) {
 	const count = parseInt(container.querySelector('.js-order-item-student-count').innerHTML);
 	const productLink = container.querySelector('.js-order-item-link').getAttribute('href');
-	const existingForms = container.querySelectorAll('.js-student-info-form');
 
-	if (isNaN(count)) {
-		console.error('Could not create student details form for class');
+	if (!productLink) {
+		console.error('Could not find product identifier for class', productLink);
 		container.remove();
 		return;
 	}
 
-	const forms = [];
-	if (!allForms[productLink]) {
-		allForms[productLink] = forms;
+	if (isNaN(count)) {
+		console.error('Could not create student details form for class', productLink);
+		container.remove();
+		return;
 	}
 
-	if (existingForms.length < count) {
-		for (let i = 0; i < count - existingForms.length; i++) {
-			const form = formTemplate.cloneNode(true);
-			if (form instanceof HTMLFormElement) {
-				form.querySelector('.js-student-details-form-header').textContent = 'Student ' + (i + 1) + ' details';
-				container.appendChild(form);
-				forms.push(form);
-			}
+	if (count === 0) {
+		console.warn('encountered class with 0 students', productLink);
+		return;
+	}
+
+	if (!allForms[productLink]) {
+		allForms[productLink] = [];
+	}
+
+	const forms = allForms[productLink];
+
+	for (const existingForm of forms) {
+		if (existingForm.isConnected) {
+			continue;
+		}
+
+		container.appendChild(existingForm);
+	}
+
+	for (let i = 0; i < count - forms.length; i++) {
+		const form = formTemplate.cloneNode(true);
+		if (form instanceof HTMLFormElement) {
+			form.querySelector('.js-student-details-form-header').textContent = 'Student ' + (i + 1) + ' details';
+			container.appendChild(form);
+			forms.push(form);
 		}
 	}
 
-	if (existingForms.length > count) {
-		for (let i = existingForms.length - 1; i > count; i--) {
-			existingForms.item(i).remove();
+	while (forms.length > count) {
+		const formToRemove = forms.pop();
+		if (formToRemove) {
+			formToRemove.remove();
 		}
 	}
 }
