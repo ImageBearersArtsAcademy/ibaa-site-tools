@@ -3,7 +3,7 @@ const formTemplate = document.querySelector('.js-per-student-info-form');
 formTemplate.remove();
 formTemplate.setAttribute('id', null);
 formTemplate.classList.add('js-student-info-form');
-let submitButton = cloneSubmitButton();
+const submitButton = cloneSubmitButton();
 let notesInput = document.querySelector('#wf-ecom-notes');
 
 /**
@@ -13,7 +13,6 @@ const allForms = {};
 
 function initializeForms() {
 	notesInput = document.querySelector('#wf-ecom-notes');
-	submitButton = cloneSubmitButton();
 	document.querySelectorAll('.js-remove-me').forEach(x => x.remove());
 
 	const containers = document.querySelectorAll('.js-student-details-container');
@@ -151,6 +150,7 @@ function submitCheckout() {
 
 	const values = getFormValues();
 	notesInput.value = JSON.stringify(values);
+	const originalSubmitButton = document.querySelector('#checkout-submit');
 	originalSubmitButton.click();
 }
 

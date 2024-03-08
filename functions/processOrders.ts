@@ -4,7 +4,8 @@ import {
 	HttpResponseInit,
 	InvocationContext,
 } from '@azure/functions';
-import { mapOrder } from '../webflow';
+import * as st from 'simple-runtypes';
+import { mapOrder, validateWebhookSignature } from '../webflow';
 import { WebhookPayload } from '../types';
 import { addOrderData } from '../google';
 
@@ -12,15 +13,29 @@ export async function processOrders(
 	request: HttpRequest,
 	context: InvocationContext
 ): Promise<HttpResponseInit> {
-	// TODO: Remove this once request validation is added
-	return { status: 404 };
+	const requestSignature = request.headers.get('X-Webflow-Signature');
+	const requestTimestamp = request.headers.get('X-Webflow-Timestamp');
+	const requestBodyParse = st.use(WebhookPayload, await request.json());
 
-	const body = WebhookPayload(await request.json());
-	if (body.triggerType !== 'ecomm_new_order') {
+	if (!requestBodyParse.ok) {
+		return { status: 400, jsonBody: { error: requestBodyParse.error.reason } };
+	}
+
+	const requestBody = requestBodyParse.result;
+
+	if (
+		!requestSignature ||
+		!requestTimestamp ||
+		!validateWebhookSignature(requestSignature, requestTimestamp, requestBody)
+	) {
 		return { status: 404 };
 	}
 
-	const order = mapOrder(body.payload);
+	if (requestBody.triggerType !== 'ecomm_new_order') {
+		return { status: 404 };
+	}
+
+	const order = mapOrder(requestBody.payload);
 	await addOrderData([order]);
 	context.log(`Processed order ${order.orderId}`);
 
