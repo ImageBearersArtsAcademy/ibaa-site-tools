@@ -10,7 +10,7 @@
     "prestart": "npm run clean && npm run build",
     "start": "func start",
     "test": "echo \"No tests yet...\"",
-    "process-order": "tsx ./backend/processOrder.ts"
+    "process-order": "tsx ./webflow/processOrder.ts"
   },
   "author": "",
   "license": "ISC",
