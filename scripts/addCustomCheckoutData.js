@@ -3,7 +3,7 @@ const formTemplate = document.querySelector('.js-per-student-info-form');
 formTemplate.remove();
 formTemplate.setAttribute('id', null);
 formTemplate.classList.add('js-student-info-form');
-const submitButton = cloneSubmitButton();
+let submitButton = cloneSubmitButton();
 let notesInput = document.querySelector('#wf-ecom-notes');
 
 /**
@@ -13,6 +13,7 @@ const allForms = {};
 
 function initializeForms() {
 	notesInput = document.querySelector('#wf-ecom-notes');
+	submitButton = cloneSubmitButton();
 	document.querySelectorAll('.js-remove-me').forEach(x => x.remove());
 
 	const containers = document.querySelectorAll('.js-student-details-container');
@@ -127,8 +128,10 @@ function validateForms() {
 function cloneSubmitButton() {
 	const existingClone = document.querySelector('#checkout-submit-clone');
 	if (existingClone) {
-		existingClone.removeEventListener('click', submitCheckout);
-		existingClone.remove();
+		if (existingClone.classList.contains('hidden')) {
+			existingClone.classList.remove('hidden');
+		}
+		return existingClone;
 	}
 
 	const originalSubmitButton = document.querySelector('#checkout-submit');
