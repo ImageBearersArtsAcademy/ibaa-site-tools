@@ -4,7 +4,7 @@ import {
 	HttpResponseInit,
 	InvocationContext,
 } from '@azure/functions';
-import { mapOrder } from '../backend';
+import { mapOrder } from '../webflow';
 import { WebhookPayload } from '../types';
 import { addOrderData } from '../google';
 
