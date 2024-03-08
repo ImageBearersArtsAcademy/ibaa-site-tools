@@ -1,4 +1,5 @@
 //# sourceURL=addCustomCheckoutData.js
+const localStorageKey = 'ibaa-student-info-draft';
 const formTemplate = document.querySelector('.js-per-student-info-form');
 formTemplate.remove();
 formTemplate.setAttribute('id', null);
@@ -14,8 +15,10 @@ const allForms = {};
 function initializeForms() {
 	notesInput = document.querySelector('#wf-ecom-notes');
 	submitButton = cloneSubmitButton();
-	document.querySelectorAll('.js-remove-me').forEach(x => x.remove());
-	document.querySelectorAll('.js-hide-me').forEach(x => x.classList.add('hidden'));
+	document.querySelectorAll('.js-remove-me').forEach((x) => x.remove());
+	document
+		.querySelectorAll('.js-hide-me')
+		.forEach((x) => x.classList.add('hidden'));
 
 	const containers = document.querySelectorAll('.js-student-details-container');
 
@@ -30,8 +33,12 @@ function initializeForms() {
  * @param {Element} container
  */
 function createStudentDetailsForm(container) {
-	const count = parseInt(container.querySelector('.js-order-item-student-count').innerHTML);
-	const productLink = container.querySelector('.js-order-item-link').getAttribute('href');
+	const count = parseInt(
+		container.querySelector('.js-order-item-student-count').innerHTML
+	);
+	const productLink = container
+		.querySelector('.js-order-item-link')
+		.getAttribute('href');
 
 	if (!productLink) {
 		console.error('Could not find product identifier for class', productLink);
@@ -40,7 +47,10 @@ function createStudentDetailsForm(container) {
 	}
 
 	if (isNaN(count)) {
-		console.error('Could not create student details form for class', productLink);
+		console.error(
+			'Could not create student details form for class',
+			productLink
+		);
 		container.remove();
 		return;
 	}
@@ -50,11 +60,15 @@ function createStudentDetailsForm(container) {
 		return;
 	}
 
+	const draftValues = getDraftFormValues();
+
 	if (!allForms[productLink]) {
 		allForms[productLink] = [];
 	}
 
 	const forms = allForms[productLink];
+	const existingFormCount = forms.length;
+	const missingFormCount = count - forms.length;
 
 	for (const existingForm of forms) {
 		if (existingForm.isConnected) {
@@ -64,13 +78,27 @@ function createStudentDetailsForm(container) {
 		container.appendChild(existingForm);
 	}
 
-	for (let i = 0; i < count - forms.length; i++) {
+	for (let i = 0; i < missingFormCount; i++) {
 		const form = formTemplate.cloneNode(true);
 		if (form instanceof HTMLFormElement) {
-			form.querySelector('.js-student-details-form-header').textContent = 'Student ' + (i + 1) + ' details';
+			const absoluteIndex = i + existingFormCount;
+			form.querySelector('.js-student-details-form-header').textContent =
+				'Student ' + (absoluteIndex + 1) + ' details';
 			container.appendChild(form);
 			forms.push(form);
+
+			if (
+				draftValues &&
+				draftValues[productLink] &&
+				draftValues[productLink][absoluteIndex]
+			) {
+				updateFormWithSavedValues(
+					form,
+					draftValues[productLink][absoluteIndex]
+				);
+			}
 		}
+		form.addEventListener('change', saveDraftFormValues);
 	}
 
 	while (forms.length > count) {
@@ -83,7 +111,7 @@ function createStudentDetailsForm(container) {
 
 function purgeOrphanedForms() {
 	for (const key of Object.keys(allForms)) {
-		allForms[key] = allForms[key].filter(form => form.isConnected);
+		allForms[key] = allForms[key].filter((form) => form.isConnected);
 
 		if (!allForms[key].length) {
 			delete allForms[key];
@@ -97,15 +125,24 @@ function keepFormsInDocument() {
 	/**
 	 * @type {typeof window.MutationObserver}
 	 */
-	const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+	const MutationObserver =
+		window.MutationObserver || window.WebKitMutationObserver;
 
 	if (MutationObserver) {
 		const observer = new MutationObserver(initializeForms);
 
 		observer.observe(orderItemContainer, { childList: true, subtree: true });
 	} else {
-		orderItemContainer.addEventListener('DOMNodeInserted', initializeForms, false);
-		orderItemContainer.addEventListener('DOMNodeRemoved', initializeForms, false);
+		orderItemContainer.addEventListener(
+			'DOMNodeInserted',
+			initializeForms,
+			false
+		);
+		orderItemContainer.addEventListener(
+			'DOMNodeRemoved',
+			initializeForms,
+			false
+		);
 	}
 }
 
@@ -170,10 +207,42 @@ function submitCheckout() {
 		return;
 	}
 
+	clearDraftFormValues();
 	const values = getFormValues();
 	notesInput.value = JSON.stringify(values);
 	const originalSubmitButton = document.querySelector('#checkout-submit');
 	originalSubmitButton.click();
+}
+
+function clearDraftFormValues() {
+	localStorage.removeItem(localStorageKey);
+}
+
+function saveDraftFormValues() {
+	const formValues = getFormValues();
+	localStorage.setItem(localStorageKey, JSON.stringify(formValues));
+}
+
+function getDraftFormValues() {
+	const draft = localStorage.getItem(localStorageKey);
+	if (draft) {
+		return JSON.parse(draft);
+	}
+}
+
+/**
+ * @param {HTMLFormElement} form
+ * @param {Record<string, string>} values
+ */
+function updateFormWithSavedValues(form, values) {
+	for (const name of Object.keys(values)) {
+		const input = form.querySelector(
+			'[data-name="' + name.replace(/"/g, '"') + '"]'
+		);
+		if (input && values[name] && typeof values[name].value === 'string') {
+			input.value = values[name].value;
+		}
+	}
 }
 
 initializeForms();
